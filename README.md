@@ -28,7 +28,7 @@ flowchart TD
 > [!Note]
 > **Requirements:** [Node.js 24 or 25](https://nodejs.org/en/download)
 >
-> **Windows:** <kbd>Download and run the installation file from the official nvm-windows GitHub page.</kbd> [https://github.com/nvm-windows/nvm](https://github.com/nvm-windows/nvm)
+> **Windows:** <kbd>Download and run the installation file from the official GitHub page [nvm-windows/nvm](https://github.com/nvm-windows/nvm)</kbd>
 > ```
 > nvm install 24 && nvm use 24
 > ```
