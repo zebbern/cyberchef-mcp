@@ -1,0 +1,527 @@
+{
+  "server": "cyberchef",
+  "tools": [
+    {
+      "name": "list_categories",
+      "title": "List categories",
+      "description": "List CyberChef categories and how many operations each one contains. An optional name is matched without case sensitivity, so Data Format matches Data format.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Category name. Matching is case-insensitive. Omit to list every category."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "search_operations",
+      "title": "Search operations",
+      "description": "Search the full CyberChef catalog, including Networking and operations the Node API cannot run. Each hit has name, category, description, and available.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Case-insensitive match against the operation name and description. Omit to return the whole catalog."
+          },
+          "category": {
+            "type": "string",
+            "description": "Category filter. Matching is case-insensitive."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "describe_operation",
+      "title": "Describe operation",
+      "description": "Return the CyberChef help record for an operation: description, input type, output type, and arguments. Unavailable operations are still described.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Operation name. AES matches an AES operation; full names such as AES Encrypt are exact."
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "run_operation",
+      "title": "Run operation",
+      "description": "Run one CyberChef operation by name without mounting it. Pass input, or inputPath for a file or folder. outputPath writes the raw bytes. args is the positional list used by saved recipes, or a named object. Output is JSON { output, encoding, type }.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Operation name."
+          },
+          "input": {
+            "type": "string",
+            "description": "Data to process. Omit when inputPath is set."
+          },
+          "inputEncoding": {
+            "type": "string",
+            "enum": [
+              "utf8",
+              "base64",
+              "hex"
+            ],
+            "default": "utf8",
+            "description": "How to decode input. Ignored when inputPath is set."
+          },
+          "inputPath": {
+            "type": "string",
+            "description": "File or folder to open as input. A folder runs the operation on each file, including nested files."
+          },
+          "outputPath": {
+            "type": "string",
+            "description": "File path for one input, or a folder when inputPath is a folder. The raw bytes are written there."
+          },
+          "args": {
+            "description": "Positional argument list or named argument object. Omit to use defaults."
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "bake",
+      "title": "Bake recipe",
+      "description": "Run a CyberChef recipe, the same { op, args } list the Node API, the web app, and load_recipe accept. Pass input, or inputPath for a file or folder. outputPath writes the raw bytes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string",
+            "description": "Data to process. Omit when inputPath is set."
+          },
+          "inputEncoding": {
+            "type": "string",
+            "enum": [
+              "utf8",
+              "base64",
+              "hex"
+            ],
+            "default": "utf8",
+            "description": "How to decode input. Ignored when inputPath is set."
+          },
+          "inputPath": {
+            "type": "string",
+            "description": "File or folder to open as input. A folder bakes each file, including nested files."
+          },
+          "outputPath": {
+            "type": "string",
+            "description": "File path for one input, or a folder when inputPath is a folder. The raw bytes are written there."
+          },
+          "recipe": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "type": "string",
+                  "description": "Operation name."
+                },
+                "args": {
+                  "description": "Positional argument list or named argument object."
+                }
+              },
+              "required": [
+                "op"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Recipe steps in order."
+          }
+        },
+        "required": [
+          "recipe"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "magic",
+      "title": "Magic",
+      "description": "Run CyberChef Magic on input or on each file in inputPath. depth, intensive mode, extensive language support, and an optional crib filter the speculative decode. outputPath writes the raw bytes. This uses a longer timeout than bake.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string",
+            "description": "Data to inspect. Omit when inputPath is set."
+          },
+          "inputEncoding": {
+            "type": "string",
+            "enum": [
+              "utf8",
+              "base64",
+              "hex"
+            ],
+            "default": "utf8",
+            "description": "How to decode input. Ignored when inputPath is set."
+          },
+          "inputPath": {
+            "type": "string",
+            "description": "File or folder to open as input. A folder runs Magic on each file, including nested files."
+          },
+          "outputPath": {
+            "type": "string",
+            "description": "File path for one input, or a folder when inputPath is a folder. The raw bytes are written there."
+          },
+          "depth": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 3,
+            "description": "How many decode steps Magic may chain."
+          },
+          "intensive": {
+            "type": "boolean",
+            "default": false,
+            "description": "Intensive mode. Brute-forces more encodings and is much slower."
+          },
+          "languageSupport": {
+            "type": "boolean",
+            "default": false,
+            "description": "Extensive language support."
+          },
+          "crib": {
+            "type": "string",
+            "default": "",
+            "description": "Known plaintext or regular expression used to filter results."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "enable_category",
+      "title": "Enable category",
+      "description": "Mount every operation in a category as its own cc_<slug> tool for this session. The category name is matched without case sensitivity.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Category name, for example Data format or Encryption / Encoding."
+          }
+        },
+        "required": [
+          "category"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "disable_category",
+      "title": "Disable category",
+      "description": "Remove the cc_<slug> tools mounted for a category. Search, bake, magic, recipe save/load, and the enable/disable tools stay registered.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Category name. Matching is case-insensitive."
+          }
+        },
+        "required": [
+          "category"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "enable_operations",
+      "title": "Enable operations",
+      "description": "Mount only the named operations as cc_<slug> tools. Use this when a whole category would be larger than you need.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Operation names to mount."
+          }
+        },
+        "required": [
+          "names"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "disable_operations",
+      "title": "Disable operations",
+      "description": "Remove cc_<slug> tools for the named operations. Always-on tools are never removed.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Operation names to unmount."
+          }
+        },
+        "required": [
+          "names"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "save_recipe",
+      "title": "Save recipe",
+      "description": "Store a named recipe on disk. Saving the same name again replaces the stored steps. The file is CYBERCHEF_RECIPE_PATH, or ~/.cyberchef/recipes.json when that variable is unset.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name used to load the recipe later. Matching ignores case."
+          },
+          "recipe": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "type": "string",
+                  "description": "Operation name."
+                },
+                "args": {
+                  "description": "Positional argument list or named argument object."
+                }
+              },
+              "required": [
+                "op"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "description": "Recipe steps in order, the same shape bake accepts."
+          }
+        },
+        "required": [
+          "name",
+          "recipe"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "load_recipe",
+      "title": "Load recipe",
+      "description": "Return a previously saved recipe. Pass the recipe array to bake to run it. The name match ignores case.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Saved recipe name."
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_recipes",
+      "title": "List recipes",
+      "description": "List saved recipe names and how many steps each one has.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "delete_recipe",
+      "title": "Delete recipe",
+      "description": "Remove one saved recipe from disk. The name match ignores case.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Saved recipe name."
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    }
+  ],
+  "mountedTools": {
+    "name": "cc_<slug>",
+    "addedBy": [
+      "enable_category",
+      "enable_operations"
+    ],
+    "removedBy": [
+      "disable_category",
+      "disable_operations"
+    ],
+    "arguments": "input, inputEncoding, inputPath, and outputPath, plus one field for each CyberChef argument. The field name is the argument name. Argument definitions are in operations.json."
+  }
+}

@@ -8,12 +8,14 @@
     "node": ">=24 <27"
   },
   "bin": {
-    "cyberchef": "./dist/index.js"
+    "cyberchef": "dist/index.js"
   },
   "files": [
     "dist",
+    "docs",
     "scripts",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "publishConfig": {
     "access": "public"

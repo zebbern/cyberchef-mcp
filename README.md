@@ -1,41 +1,114 @@
 # CyberChef
 
-Local [stdio](https://modelcontextprotocol.io) MCP server for [CyberChef](https://gchq.github.io/CyberChef) 11.5.0. Every operation stays callable through `run_operation` and `bake`. The default tool list stays small. A category, or a named list of operations, can be mounted as individual tools for the rest of the session.
+Local [stdio](https://modelcontextprotocol.io) MCP server for [CyberChef](https://gchq.github.io/CyberChef) 11.5.0. The client keeps a small tool list. Every operation stays callable through `run_operation` and `bake`. A category, or a named list of operations, can be mounted as `cc_` tools for the rest of the session.
 
-## Requirements
+```mermaid
+flowchart TD
+  client[MCP client]
+  search[search_operations and describe_operation]
+  run[run_operation bake and magic]
+  mount[enable_category and enable_operations]
+  mounted[cc_ tools]
+  chef[CyberChef 11.5.0]
+  files[inputPath and outputPath]
+  recipes[saved recipes]
+  client --> search
+  client --> run
+  client --> mount
+  mount --> mounted
+  search --> chef
+  run --> chef
+  mounted --> chef
+  run --> files
+  run --> recipes
+```
 
-- Node.js `>=24 <27`
+Node.js 24 or 25.
 
-## Cursor
+## Install
 
-Node.js 24 or 25 is required. Add this to `.cursor/mcp.json` or the user MCP config:
+**Claude Code:**
+
+```bash
+claude mcp add cyberchef -- npx -y @zebbern/cyberchef
+```
+
+**Codex CLI:**
+
+```bash
+codex mcp add cyberchef -- npx -y @zebbern/cyberchef
+```
+
+**Any MCP client** (Claude Desktop, Cursor, Kimi, and others). Paste this next to the servers already in the file:
 
 ```json
-{
-  "mcpServers": {
-    "cyberchef": {
-      "command": "npx",
-      "args": ["-y", "@zebbern/cyberchef"]
-    }
+"cyberchef": {
+  "command": "npx",
+  "args": ["-y", "@zebbern/cyberchef"]
+}
+```
+
+This entry sets every variable. `CYBERCHEF_ALLOW_NETWORK` set to `false` keeps Networking operations listed and refuses to run them. The other three values are the defaults.
+
+```json
+"cyberchef": {
+  "command": "npx",
+  "args": ["-y", "@zebbern/cyberchef"],
+  "env": {
+    "CYBERCHEF_ALLOW_NETWORK": "false",
+    "CYBERCHEF_TIMEOUT_MS": "30000",
+    "CYBERCHEF_MAGIC_TIMEOUT_MS": "60000",
+    "CYBERCHEF_RECIPE_PATH": "~/.cyberchef/recipes.json"
   }
 }
 ```
 
-Leave the environment unset and CyberChef's Networking operations stay available. Set `CYBERCHEF_ALLOW_NETWORK` to `false` to keep them listed while refusing to run them. `CYBERCHEF_TIMEOUT_MS`, `CYBERCHEF_MAGIC_TIMEOUT_MS`, and `CYBERCHEF_RECIPE_PATH` go in the same `env` object when you want a value other than the default.
+## What it does
+
+Fourteen tools stay registered. Argument schemas are in [docs/tools.json](docs/tools.json). All 539 operations and their arguments are in [docs/operations.json](docs/operations.json).
+
+| Tool | Role |
+| --- | --- |
+| `list_categories` | Category names and operation counts. Matching ignores case. |
+| `search_operations` | Full catalog, including operations the Node API cannot run. |
+| `describe_operation` | Description, input type, output type, and arguments. |
+| `run_operation` | One operation by name. |
+| `bake` | A `{ op, args }` recipe, in order. |
+| `magic` | Magic, with `depth`, `intensive`, `languageSupport`, and `crib`. |
+| `save_recipe` / `load_recipe` | Store a named recipe and return it later. |
+| `list_recipes` / `delete_recipe` | List saved names, or remove one. |
+| `enable_category` / `disable_category` | Mount or unmount a category as `cc_` tools. |
+| `enable_operations` / `disable_operations` | Mount or unmount named operations. |
+
+`run_operation`, `bake`, and `magic` take `input` or `inputPath`, not both. `inputEncoding` is `utf8` (default), `base64`, or `hex`. `inputPath` is a file or a folder. A folder runs the same recipe on each file inside it, including nested files, up to 200 files. `outputPath` writes the raw bytes.
+
+Encode `hello` through Base64, then Base62, then Base32:
 
 ```json
 {
-  "mcpServers": {
-    "cyberchef": {
-      "command": "npx",
-      "args": ["-y", "@zebbern/cyberchef"],
-      "env": {
-        "CYBERCHEF_ALLOW_NETWORK": "false"
-      }
-    }
-  }
+  "input": "hello",
+  "recipe": [
+    { "op": "To Base64" },
+    { "op": "To Base62" },
+    { "op": "To Base32" }
+  ]
 }
 ```
+
+That bake returns `HBGG6TCUOE4XC22IOQ======`.
+
+Saved recipes go to `~/.cyberchef/recipes.json`. `load_recipe` returns the step list. Pass that list to a later `bake`. Behavior, file rules, and the operations the Node API will not run are in [docs/reference.md](docs/reference.md).
+
+## Configuration
+
+Set these on the `env` object of the `cyberchef` entry. Unset means the default.
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `CYBERCHEF_ALLOW_NETWORK` | allowed | `false` keeps Networking operations in search and makes `run_operation` and `bake` refuse them. |
+| `CYBERCHEF_TIMEOUT_MS` | `30000` | Time limit for `bake` and `run_operation`. The worker is terminated when it elapses. |
+| `CYBERCHEF_MAGIC_TIMEOUT_MS` | `60000` | Time limit for `magic`. The worker is terminated when it elapses. |
+| `CYBERCHEF_RECIPE_PATH` | `~/.cyberchef/recipes.json` | File used by the recipe tools. |
 
 ## Development
 
@@ -47,46 +120,8 @@ npm start
 
 `npm install` downloads CyberChef 11.5.0 without running its Grunt postinstall, then applies the Node API patches. Do not install this package with `--ignore-scripts`.
 
-To run this checkout from Cursor before it is published, point `command` at Node and `args` at `src/index.ts` in this folder.
-
-## Tools
-
-These tools are registered at startup and are never removed:
-
-| Tool | Purpose |
-| --- | --- |
-| `list_categories` | Category names and operation counts. Names match without case sensitivity. |
-| `search_operations` | Full catalog, including Networking and Node API exclusions. Each hit has `name`, `category`, `description`, and `available`. |
-| `describe_operation` | CyberChef help record: description, input type, output type, and arguments. |
-| `run_operation` | Run one operation by name with `args`. |
-| `bake` | Run a `{ op, args }` recipe, including a recipe returned by `load_recipe` or saved from the web app. |
-| `save_recipe` / `load_recipe` | Store a named recipe on disk and return it later. Loading ignores case. Pass the loaded `recipe` array to `bake`. |
-| `list_recipes` / `delete_recipe` | List saved names, or remove one. |
-| `magic` | Magic, with depth, intensive mode, extensive language support, and a crib. |
-| `enable_category` / `disable_category` | Mount or unmount every operation in a category. |
-| `enable_operations` / `disable_operations` | Mount or unmount an explicit name list. |
-
-Mounted tools are named `cc_` plus a slug of the operation name. The description includes the category. Disabling a category removes only those mounted tools. `run_operation` and `bake` still accept the same operation names.
-
-`run_operation`, `bake`, and `magic` take either `input` plus `inputEncoding` (`utf8`, `base64`, or `hex`), or `inputPath`. `inputPath` may be a file or a folder. A folder runs the same recipe on each file inside it, including nested files, up to 200 files. `outputPath` writes the raw bytes: a file path when the input is one value, or a folder when the input is a folder. The copy-to-clipboard button in the CyberChef web app has no server equivalent. The tool result is the raw output.
-
-## Saved recipes
-
-`save_recipe` writes `~/.cyberchef/recipes.json`. Set `CYBERCHEF_RECIPE_PATH` to use a different file. `load_recipe` returns the stored `{ op, args }` list. `bake` runs that list; it does not read the file itself.
-
-## Timeouts
-
-Execution runs in a worker thread. The timeout terminates that worker.
-
-- `CYBERCHEF_TIMEOUT_MS` for `bake` and `run_operation` (default `30000`)
-- `CYBERCHEF_MAGIC_TIMEOUT_MS` for `magic` (default `60000`)
-
-## Tests
-
-```bash
-npm test
-```
+To point a client at this folder before publish, use `node` as the command and `src/index.ts` in this folder as the argument. More detail is in [docs/development.md](docs/development.md).
 
 ## License
 
-Apache-2.0. CyberChef is Crown copyright and is also Apache-2.0.
+Apache-2.0. See [LICENSE](LICENSE). CyberChef is Crown copyright and is also Apache-2.0.
