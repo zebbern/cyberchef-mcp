@@ -26,26 +26,17 @@ flowchart TD
 
 
 > [!Note]
-
-> **Requirements:** [Node.js 24 or 25]([https://nodejs.org/en/download](https://nodejs.org/en/download))
-
+> **Requirements:** [Node.js 24 or 25](https://nodejs.org/en/download)
 >
-
-> **Windows:** <kbd>Download and run the installation file from the official nvm-windows GitHub page.</kbd> [[https://github.com/nvm-windows/nvm](https://github.com/nvm-windows/nvm)](https://github.com/nvm-windows/nvm](https://github.com/nvm-windows/nvm))
-
+> **Windows:** <kbd>Download and run the installation file from the official nvm-windows GitHub page.</kbd> [https://github.com/nvm-windows/nvm](https://github.com/nvm-windows/nvm)
 > ```
-
 > nvm install 24 && nvm use 24
-
 > ```
-
 > **Linux:** <kbd>Add the Node.js 24 repository to apt</kbd>
-
+> ```
+> curl -fsSL https://nodesource.com | sudo -E bash - && sudo apt install -y nodejs
 > ```
 
-> curl -fsSL [https://nodesource.com](https://nodesource.com) | sudo -E bash - && sudo apt install -y nodejs
-
-> ```
 
 ## Install
 
