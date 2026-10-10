@@ -129,7 +129,8 @@ function onExit(exited: Worker, threadId: number, code: number) {
 }
 
 function spawn() {
-  const created = new Worker(new URL("./worker.ts", import.meta.url));
+  const workerFile = import.meta.url.endsWith(".js") ? "./worker.js" : "./worker.ts";
+  const created = new Worker(new URL(workerFile, import.meta.url));
   const threadId = created.threadId;
   created.unref();
   worker = created;

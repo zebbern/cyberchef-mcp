@@ -8,10 +8,10 @@
     "node": ">=24 <27"
   },
   "bin": {
-    "cyberchef": "./src/index.ts"
+    "cyberchef": "./dist/index.js"
   },
   "files": [
-    "src",
+    "dist",
     "scripts",
     "README.md"
   ],
@@ -19,6 +19,8 @@
     "access": "public"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build",
     "postinstall": "node scripts/install-cyberchef.mjs && node scripts/repair-cyberchef.mjs",
     "setup": "npm install --no-fund --no-audit",
     "repair-cyberchef": "node scripts/repair-cyberchef.mjs",
@@ -31,6 +33,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^24.10.0"
+    "@types/node": "^24.10.0",
+    "typescript": "^7.0.2"
   }
 }
