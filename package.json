@@ -1,0 +1,36 @@
+{
+  "name": "@zebbern/cyberchef",
+  "version": "1.0.0",
+  "description": "MCP server for CyberChef. Search, bake, and Magic over stdio.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24 <27"
+  },
+  "bin": {
+    "cyberchef": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "scripts",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install-cyberchef.mjs && node scripts/repair-cyberchef.mjs",
+    "setup": "npm install --no-fund --no-audit",
+    "repair-cyberchef": "node scripts/repair-cyberchef.mjs",
+    "start": "node scripts/repair-cyberchef.mjs && node src/index.ts",
+    "test": "node scripts/repair-cyberchef.mjs && node --test --test-concurrency=1 test/catalog.test.ts test/execute.test.ts test/files.test.ts test/recipes.test.ts test/registry.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "~1.29.0",
+    "terser": "^5.51.2",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0"
+  }
+}
