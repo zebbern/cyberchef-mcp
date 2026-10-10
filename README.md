@@ -1,6 +1,6 @@
-# CyberChef
+# <h1 align="center">CyberChef</h1>
 
-Local [stdio](https://modelcontextprotocol.io) MCP server for [CyberChef](https://gchq.github.io/CyberChef) 11.5.0. The client keeps a small tool list. Every operation stays callable through `run_operation` and `bake`. A category, or a named list of operations, can be mounted as `cc_` tools for the rest of the session.
+> Local [stdio](https://modelcontextprotocol.io) MCP server for [CyberChef](https://gchq.github.io/CyberChef) 11.5.0. The client keeps a small tool list. Every operation stays callable through `run_operation` and `bake`. A category, or a named list of operations, can be mounted as `cc_` tools for the rest of the session.
 
 ```mermaid
 flowchart TD
@@ -23,7 +23,29 @@ flowchart TD
   run --> recipes
 ```
 
-Node.js 24 or 25.
+
+
+> [!Note]
+
+> **Requirements:** [Node.js 24 or 25]([https://nodejs.org/en/download](https://nodejs.org/en/download))
+
+>
+
+> **Windows:** <kbd>Download and run the installation file from the official nvm-windows GitHub page.</kbd> [[https://github.com/nvm-windows/nvm](https://github.com/nvm-windows/nvm)](https://github.com/nvm-windows/nvm](https://github.com/nvm-windows/nvm))
+
+> ```
+
+> nvm install 24 && nvm use 24
+
+> ```
+
+> **Linux:** <kbd>Add the Node.js 24 repository to apt</kbd>
+
+> ```
+
+> curl -fsSL [https://nodesource.com](https://nodesource.com) | sudo -E bash - && sudo apt install -y nodejs
+
+> ```
 
 ## Install
 
@@ -63,22 +85,26 @@ This entry sets every variable. `CYBERCHEF_ALLOW_NETWORK` set to `false` keeps N
 }
 ```
 
+
+
 ## What it does
 
 Fourteen tools stay registered. Argument schemas are in [docs/tools.json](docs/tools.json). All 539 operations and their arguments are in [docs/operations.json](docs/operations.json).
 
-| Tool | Role |
-| --- | --- |
-| `list_categories` | Category names and operation counts. Matching ignores case. |
-| `search_operations` | Full catalog, including operations the Node API cannot run. |
-| `describe_operation` | Description, input type, output type, and arguments. |
-| `run_operation` | One operation by name. |
-| `bake` | A `{ op, args }` recipe, in order. |
-| `magic` | Magic, with `depth`, `intensive`, `languageSupport`, and `crib`. |
-| `save_recipe` / `load_recipe` | Store a named recipe and return it later. |
-| `list_recipes` / `delete_recipe` | List saved names, or remove one. |
-| `enable_category` / `disable_category` | Mount or unmount a category as `cc_` tools. |
-| `enable_operations` / `disable_operations` | Mount or unmount named operations. |
+
+| Tool                                       | Role                                                             |
+| ------------------------------------------ | ---------------------------------------------------------------- |
+| `list_categories`                          | Category names and operation counts. Matching ignores case.      |
+| `search_operations`                        | Full catalog, including operations the Node API cannot run.      |
+| `describe_operation`                       | Description, input type, output type, and arguments.             |
+| `run_operation`                            | One operation by name.                                           |
+| `bake`                                     | A `{ op, args }` recipe, in order.                               |
+| `magic`                                    | Magic, with `depth`, `intensive`, `languageSupport`, and `crib`. |
+| `save_recipe` / `load_recipe`              | Store a named recipe and return it later.                        |
+| `list_recipes` / `delete_recipe`           | List saved names, or remove one.                                 |
+| `enable_category` / `disable_category`     | Mount or unmount a category as `cc_` tools.                      |
+| `enable_operations` / `disable_operations` | Mount or unmount named operations.                               |
+
 
 `run_operation`, `bake`, and `magic` take `input` or `inputPath`, not both. `inputEncoding` is `utf8` (default), `base64`, or `hex`. `inputPath` is a file or a folder. A folder runs the same recipe on each file inside it, including nested files, up to 200 files. `outputPath` writes the raw bytes.
 
@@ -103,12 +129,16 @@ Saved recipes go to `~/.cyberchef/recipes.json`. `load_recipe` returns the step 
 
 Set these on the `env` object of the `cyberchef` entry. Unset means the default.
 
-| Variable | Default | Effect |
-| --- | --- | --- |
-| `CYBERCHEF_ALLOW_NETWORK` | allowed | `false` keeps Networking operations in search and makes `run_operation` and `bake` refuse them. |
-| `CYBERCHEF_TIMEOUT_MS` | `30000` | Time limit for `bake` and `run_operation`. The worker is terminated when it elapses. |
-| `CYBERCHEF_MAGIC_TIMEOUT_MS` | `60000` | Time limit for `magic`. The worker is terminated when it elapses. |
-| `CYBERCHEF_RECIPE_PATH` | `~/.cyberchef/recipes.json` | File used by the recipe tools. |
+
+| Variable                     | Default                     | Effect                                                                                          |
+| ---------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------- |
+| `CYBERCHEF_ALLOW_NETWORK`    | allowed                     | `false` keeps Networking operations in search and makes `run_operation` and `bake` refuse them. |
+| `CYBERCHEF_TIMEOUT_MS`       | `30000`                     | Time limit for `bake` and `run_operation`. The worker is terminated when it elapses.            |
+| `CYBERCHEF_MAGIC_TIMEOUT_MS` | `60000`                     | Time limit for `magic`. The worker is terminated when it elapses.                               |
+| `CYBERCHEF_RECIPE_PATH`      | `~/.cyberchef/recipes.json` | File used by the recipe tools.                                                                  |
+
+
+
 
 ## Development
 
