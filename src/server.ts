@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -14,6 +15,10 @@ import { runAcrossInput } from "./files.ts";
 import { deleteRecipe, listRecipes, loadRecipe, saveRecipe } from "./recipes.ts";
 import { ALWAYS_ON_TOOLS, createToolRegistry } from "./registry.ts";
 
+const { version: serverVersion } = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+) as { version: string };
+
 function textResult(value: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(value) }] };
 }
@@ -29,7 +34,7 @@ function errorResult(error: unknown) {
 export function createChefServer(): McpServer {
   loadCatalog();
   const server = new McpServer(
-    { name: "cyberchef", version: "1.0.0" },
+    { name: "cyberchef", version: serverVersion },
     {
       instructions:
         "Search or describe a CyberChef operation, then run_operation or bake. specialist tries Magic and then a short decoder ladder, with an optional prefix on every attempt. Pass input as text, or inputPath as a file or folder. outputPath writes the raw bytes to disk. save_recipe stores a recipe on disk; load_recipe returns it for a later bake. enable_category and enable_operations add cc_<slug> tools for the rest of the session; disable removes only those tools. Networking stays available unless CYBERCHEF_ALLOW_NETWORK=false.",
