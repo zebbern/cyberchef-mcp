@@ -16,7 +16,20 @@ export type FolderOutput = {
   inputPath: string;
   outputPath?: string;
   files: SavedOutput[];
+  truncated?: boolean;
+  remainingFiles?: number;
 };
+
+function positiveEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") return fallback;
+  const value = Number(raw);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+export function folderBudgetMs(): number {
+  return positiveEnv("CYBERCHEF_FOLDER_TIMEOUT_MS", 600_000);
+}
 
 function rawBytes(result: EncodedOutput): Buffer {
   if (result.encoding === "base64") return Buffer.from(result.output, "base64");
@@ -92,8 +105,12 @@ export async function runAcrossInput(spec: {
       }
       await mkdir(outputPath, { recursive: true });
     }
+    const allFiles = await filesIn(inputPath);
+    const deadline = Date.now() + folderBudgetMs();
     const files: SavedOutput[] = [];
-    for (const file of await filesIn(inputPath)) {
+    let processed = 0;
+    while (processed < allFiles.length && Date.now() < deadline) {
+      const file = allFiles[processed];
       const result = await runBytes(await readFile(file.absolute), spec.run);
       const destination = outputPath ? path.join(outputPath, file.relative) : undefined;
       const byteLength = destination ? await writeRaw(result, destination) : undefined;
@@ -103,8 +120,12 @@ export async function runAcrossInput(spec: {
         outputPath: destination,
         byteLength,
       });
+      processed += 1;
     }
-    return { inputPath, outputPath, files };
+    const remainingFiles = allFiles.length - processed;
+    return remainingFiles > 0
+      ? { inputPath, outputPath, files, truncated: true, remainingFiles }
+      : { inputPath, outputPath, files };
   }
 
   if (!info.isFile()) throw new ChefInputError(`Input path is not a file or folder: ${inputPath}`);

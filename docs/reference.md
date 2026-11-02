@@ -25,7 +25,7 @@ Mounted tools are named `cc_` plus a slug of the operation name. Disabling remov
 `run_operation`, `bake`, `magic`, `specialist`, and mounted tools take one of these:
 
 - `input` plus `inputEncoding`: `utf8` (default), `base64`, or `hex`.
-- `inputPath`: a file, or a folder. A folder runs the same operation or recipe on each file, including nested files, up to 200 files. File bytes are used as-is, so `inputEncoding` is ignored.
+- `inputPath`: a file, or a folder. A folder runs the same operation or recipe on each file, including nested files, up to 200 files. File bytes are used as-is, so `inputEncoding` is ignored. A folder stops at `CYBERCHEF_FOLDER_TIMEOUT_MS`; the result keeps what ran, with `truncated: true` and `remainingFiles`.
 
 Pass `input` or `inputPath`, not both.
 

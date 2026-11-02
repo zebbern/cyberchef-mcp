@@ -8,4 +8,5 @@ Set these on the `env` object of the `cyberchef` entry in [Install](install.md).
 | `CYBERCHEF_TIMEOUT_MS` | `30000` | Time limit for `bake` and `run_operation`. The worker is terminated when it elapses. |
 | `CYBERCHEF_MAGIC_TIMEOUT_MS` | `60000` | Time limit for `magic`. The worker is terminated when it elapses. |
 | `CYBERCHEF_SPECIALIST_TIMEOUT_MS` | `180000` | Time limit for one `specialist` ladder. Each Magic call uses the time that remains, capped by `CYBERCHEF_MAGIC_TIMEOUT_MS`. |
+| `CYBERCHEF_FOLDER_TIMEOUT_MS` | `600000` | Whole-folder time limit for every tool with `inputPath`. Past it the batch stops and the result keeps what ran, with `truncated: true` and `remainingFiles`. |
 | `CYBERCHEF_RECIPE_PATH` | `~/.cyberchef/recipes.json` | File used by `save_recipe`, `load_recipe`, `list_recipes`, and `delete_recipe`. |

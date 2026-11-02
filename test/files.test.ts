@@ -101,7 +101,30 @@ describe("file input and output", { concurrency: 1 }, () => {
       assert.equal(files.length, 2);
       assert.equal(readFileSync(path.join(outputPath, "one.txt"), "utf8"), "one");
       assert.equal(readFileSync(path.join(outputPath, "nested", "two.txt"), "utf8"), "two");
+      assert.equal(baked.truncated, undefined);
     } finally {
+      await connected.close();
+    }
+  });
+
+  test("a folder past its budget stops and reports what is left", { timeout: 180_000 }, async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "cyberchef-folder-cap-"));
+    const inputPath = path.join(dir, "in");
+    mkdirSync(inputPath, { recursive: true });
+    writeFileSync(path.join(inputPath, "one.txt"), "one");
+    writeFileSync(path.join(inputPath, "two.txt"), "two");
+    const connected = await session();
+    const previous = process.env.CYBERCHEF_FOLDER_TIMEOUT_MS;
+    process.env.CYBERCHEF_FOLDER_TIMEOUT_MS = "1";
+    try {
+      const baked = await callJson(connected.client, "bake", { inputPath, recipe: [] });
+      assert.equal(baked.truncated, true);
+      const remaining = baked.remainingFiles as number;
+      assert.ok(remaining >= 1, `remainingFiles was ${remaining}`);
+      assert.equal((baked.files as unknown[]).length + remaining, 2);
+    } finally {
+      if (previous === undefined) delete process.env.CYBERCHEF_FOLDER_TIMEOUT_MS;
+      else process.env.CYBERCHEF_FOLDER_TIMEOUT_MS = previous;
       await connected.close();
     }
   });
