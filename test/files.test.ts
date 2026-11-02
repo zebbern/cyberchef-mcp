@@ -7,6 +7,7 @@ import { after, describe, test } from "node:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { shutdownWorkers } from "../src/execute.ts";
+import { runAcrossInput, type FolderOutput } from "../src/files.ts";
 import { createChefServer } from "../src/server.ts";
 
 const HEX_TEXT = "64 47 56 7a 64 41 3d 3d";
@@ -107,25 +108,30 @@ describe("file input and output", { concurrency: 1 }, () => {
     }
   });
 
-  test("a folder past its budget stops and reports what is left", { timeout: 180_000 }, async () => {
+  test("a folder past its budget stops and reports what is left", async () => {
     const dir = mkdtempSync(path.join(tmpdir(), "cyberchef-folder-cap-"));
     const inputPath = path.join(dir, "in");
     mkdirSync(inputPath, { recursive: true });
     writeFileSync(path.join(inputPath, "one.txt"), "one");
     writeFileSync(path.join(inputPath, "two.txt"), "two");
-    const connected = await session();
     const previous = process.env.CYBERCHEF_FOLDER_TIMEOUT_MS;
     process.env.CYBERCHEF_FOLDER_TIMEOUT_MS = "1";
     try {
-      const baked = await callJson(connected.client, "bake", { inputPath, recipe: [] });
+      // The 25 ms run guarantees the 1 ms budget is spent after one file on any machine.
+      const baked = (await runAcrossInput({
+        inputPath,
+        run: async (input) => {
+          await new Promise((resolve) => setTimeout(resolve, 25));
+          return { output: input, encoding: "utf8", type: "string" };
+        },
+      })) as FolderOutput;
       assert.equal(baked.truncated, true);
-      const remaining = baked.remainingFiles as number;
+      const remaining = baked.remainingFiles ?? 0;
       assert.ok(remaining >= 1, `remainingFiles was ${remaining}`);
-      assert.equal((baked.files as unknown[]).length + remaining, 2);
+      assert.equal(baked.files.length + remaining, 2);
     } finally {
       if (previous === undefined) delete process.env.CYBERCHEF_FOLDER_TIMEOUT_MS;
       else process.env.CYBERCHEF_FOLDER_TIMEOUT_MS = previous;
-      await connected.close();
     }
   });
 
