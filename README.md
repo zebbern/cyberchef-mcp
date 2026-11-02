@@ -26,17 +26,16 @@ flowchart TD
 
 
 > [!Note]
+>
 > **Requirements:** [Node.js 24 or 25](https://nodejs.org/en/download)
 >
-> **Windows:** <kbd>Download and run the installation file from the official GitHub page [nvm-windows/nvm](https://github.com/nvm-windows/nvm)</kbd>
+> **Windows:** the official installer from [nodejs.org](https://nodejs.org/en/download) is the simplest route. If you manage Node with [nvm-windows](https://github.com/nvm-windows/nvm):
+>
 > ```
 > nvm install 24 && nvm use 24
 > ```
-> **Linux:** <kbd>Add the Node.js 24 repository to apt</kbd>
-> ```
-> curl -fsSL https://nodesource.com | sudo -E bash - && sudo apt install -y nodejs
-> ```
-
+>
+> **Linux:** follow the [NodeSource](https://github.com/nodesource/distributions) instructions for your distribution, or install the `nodejs` package from your package manager.
 
 ## Install
 
