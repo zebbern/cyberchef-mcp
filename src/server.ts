@@ -9,6 +9,7 @@ import {
 } from "./catalog.ts";
 import { ChefInputError, ChefTimeoutError } from "./errors.ts";
 import { bake, magic, runOperation } from "./execute.ts";
+import { specialist } from "./specialist.ts";
 import { runAcrossInput } from "./files.ts";
 import { deleteRecipe, listRecipes, loadRecipe, saveRecipe } from "./recipes.ts";
 import { ALWAYS_ON_TOOLS, createToolRegistry } from "./registry.ts";
@@ -31,7 +32,7 @@ export function createChefServer(): McpServer {
     { name: "cyberchef", version: "1.0.0" },
     {
       instructions:
-        "Search or describe a CyberChef operation, then run_operation or bake. Pass input as text, or inputPath as a file or folder. outputPath writes the raw bytes to disk. save_recipe stores a recipe on disk; load_recipe returns it for a later bake. enable_category and enable_operations add cc_<slug> tools for the rest of the session; disable removes only those tools. Networking stays available unless CYBERCHEF_ALLOW_NETWORK=false.",
+        "Search or describe a CyberChef operation, then run_operation or bake. specialist tries Magic and then a short decoder ladder, with an optional prefix on every attempt. Pass input as text, or inputPath as a file or folder. outputPath writes the raw bytes to disk. save_recipe stores a recipe on disk; load_recipe returns it for a later bake. enable_category and enable_operations add cc_<slug> tools for the rest of the session; disable removes only those tools. Networking stays available unless CYBERCHEF_ALLOW_NETWORK=false.",
     },
   );
   const registry = createToolRegistry(server);
@@ -183,6 +184,51 @@ export function createChefServer(): McpServer {
   );
 
   server.registerTool(
+    "specialist",
+    {
+      title: "Specialist",
+      description: "Run a short decode ladder. With no prefix the first attempt is Magic, then each common decoder followed by Magic. A prefix such as From Base64 is baked once and stays on every attempt. XOR Brute Force and ROT13 Brute Force are attempts of their own and are not followed by Magic. A crib match stops the ladder. The result lists every attempt that produced output.",
+      inputSchema: {
+        input: z.string().optional().describe("Data to inspect. Omit when inputPath is set."),
+        inputEncoding: z.enum(["utf8", "base64", "hex"]).default("utf8").describe("How to decode input. Ignored when inputPath is set."),
+        inputPath: z.string().optional().describe("File or folder to open as input. A folder runs the ladder on each file, including nested files."),
+        outputPath: z.string().optional().describe("File path for one input, or a folder when inputPath is a folder. The winning candidate's raw bytes are written there."),
+        prefix: z.array(z.object({
+          op: z.string().describe("Operation name."),
+          args: z.any().optional().describe("Positional argument list or named argument object."),
+        })).optional().describe("Steps baked once and kept in front of every attempt."),
+        depth: z.number().int().min(0).default(3).describe("How many decode steps Magic may chain on each Magic attempt."),
+        intensive: z.boolean().default(false).describe("Intensive mode for every Magic attempt. Brute-forces more encodings and is much slower."),
+        languageSupport: z.boolean().default(false).describe("Extensive language support for every Magic attempt."),
+        crib: z.string().default("").describe("Known plaintext or regular expression. A match stops the ladder."),
+        maxAttempts: z.number().int().min(1).optional().describe("How many ladder attempts to run. Omit to run the full ladder."),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    },
+    async ({ input, inputEncoding, inputPath, outputPath, prefix, depth, intensive, languageSupport, crib, maxAttempts }) => {
+      try {
+        return textResult(await runAcrossInput({
+          input,
+          inputEncoding,
+          inputPath,
+          outputPath,
+          run: (data, encoding) => specialist(data, {
+            inputEncoding: encoding,
+            prefix,
+            depth,
+            intensive,
+            languageSupport,
+            crib,
+            maxAttempts,
+          }),
+        }));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
     "enable_category",
     {
       title: "Enable category",
@@ -205,7 +251,7 @@ export function createChefServer(): McpServer {
     "disable_category",
     {
       title: "Disable category",
-      description: "Remove the cc_<slug> tools mounted for a category. Search, bake, magic, recipe save/load, and the enable/disable tools stay registered.",
+      description: "Remove the cc_<slug> tools mounted for a category. Search, bake, magic, specialist, recipe save/load, and the enable/disable tools stay registered.",
       inputSchema: {
         category: z.string().describe("Category name. Matching is case-insensitive."),
       },

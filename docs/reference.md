@@ -1,6 +1,6 @@
 # Reference
 
-Argument schemas for the 14 always-on tools are in [tools.json](tools.json). Every CyberChef operation, including argument names and types, is in [operations.json](operations.json). `node scripts/export-docs.mjs` rewrites both files from the server.
+Argument schemas for the 15 always-on tools are in [tools.json](tools.json). Every CyberChef operation, including argument names and types, is in [operations.json](operations.json). `node scripts/export-docs.mjs` rewrites both files from the server.
 
 CyberChef 11.5.0, stdio. These tools stay registered for the whole session.
 
@@ -12,6 +12,7 @@ CyberChef 11.5.0, stdio. These tools stay registered for the whole session.
 | `run_operation` | One operation by name. `args` is a positional list or a named object. Omit `args` to use CyberChef's defaults. |
 | `bake` | A `{ op, args }` recipe, including a list from `load_recipe` or a clean-JSON recipe saved in the web app. |
 | `magic` | Magic. See below. |
+| `specialist` | A short decode ladder. See below. |
 | `save_recipe` / `load_recipe` | Store a named recipe and return it later. The name match ignores case. Saving the same name replaces the steps. |
 | `list_recipes` / `delete_recipe` | List saved names and step counts, or remove one. |
 | `enable_category` / `disable_category` | Mount or unmount every operation in a category as its own tool. |
@@ -21,7 +22,7 @@ Mounted tools are named `cc_` plus a slug of the operation name. Disabling remov
 
 ## Input and output
 
-`run_operation`, `bake`, `magic`, and mounted tools take one of these:
+`run_operation`, `bake`, `magic`, `specialist`, and mounted tools take one of these:
 
 - `input` plus `inputEncoding`: `utf8` (default), `base64`, or `hex`.
 - `inputPath`: a file, or a folder. A folder runs the same operation or recipe on each file, including nested files, up to 200 files. File bytes are used as-is, so `inputEncoding` is ignored.
@@ -49,6 +50,22 @@ A name is a non-empty string without path separators.
 `languageSupport` is extensive language support. The default is `false`.
 
 `crib` is known plaintext or a regular expression used to keep matching results. The default is empty.
+
+## Specialist
+
+`specialist` runs a short ladder and returns every attempt that produced output. With no prefix, the first attempt is Magic. Each later attempt bakes one undo operation, then runs Magic. The undo operations are From Base64, From Base32, From Base58, From Hex, URL Decode, From Quoted Printable, Gunzip, Zlib Inflate, and Raw Inflate. XOR Brute Force and ROT13 Brute Force run after those, without a following Magic step. Each one already returns a report of many keys.
+
+A prefix is a recipe. It is baked once and stays on every attempt. The first attempt is that prefix, then Magic. An undo operation that is already the last prefix step is skipped. An unknown prefix operation fails the call. A later decoder that throws is skipped.
+
+`maxAttempts` limits how many attempts run. Omit it to run the full ladder. `depth`, `intensive`, `languageSupport`, and `crib` are passed to every Magic call. The same crib is passed to the brute-force operations. A crib match stops the ladder. Magic returning a result is not itself a match. `hit` is true only when a candidate contains the crib.
+
+The top-level `output`, `encoding`, and `type` are the winning candidate, so `outputPath` writes those bytes. `candidates` lists `rank`, `recipe`, `output`, `encoding`, `type`, and `matchedCrib`. `reason` is `crib` when a candidate matched the crib, otherwise `local`.
+
+Local order puts a crib match first, then UTF-8 output that differs from the input, then the attempt order.
+
+The ladder stops at `CYBERCHEF_SPECIALIST_TIMEOUT_MS`. The default is `180000`. Each Magic call uses the remaining time, capped by `CYBERCHEF_MAGIC_TIMEOUT_MS`. A folder runs the ladder on each file, up to 200 files.
+
+Magic is a flow-control operation, so a candidate recipe that contains Magic cannot be passed to `bake`. Replay the earlier steps with `bake`, then call `magic`.
 
 ## Limits
 

@@ -61,7 +61,7 @@ codex mcp add cyberchef -- npx -y @zebbern/cyberchef
 }
 ```
 
-This entry sets every variable. `CYBERCHEF_ALLOW_NETWORK` set to `false` keeps Networking operations listed and refuses to run them. The other three values are the defaults.
+This entry sets every server variable. `CYBERCHEF_ALLOW_NETWORK` set to `false` keeps Networking operations listed and refuses to run them. The other values are the defaults.
 
 ```json
 "cyberchef": {
@@ -71,6 +71,7 @@ This entry sets every variable. `CYBERCHEF_ALLOW_NETWORK` set to `false` keeps N
     "CYBERCHEF_ALLOW_NETWORK": "false",
     "CYBERCHEF_TIMEOUT_MS": "30000",
     "CYBERCHEF_MAGIC_TIMEOUT_MS": "60000",
+    "CYBERCHEF_SPECIALIST_TIMEOUT_MS": "180000",
     "CYBERCHEF_RECIPE_PATH": "~/.cyberchef/recipes.json"
   }
 }
@@ -80,7 +81,7 @@ This entry sets every variable. `CYBERCHEF_ALLOW_NETWORK` set to `false` keeps N
 
 ## What it does
 
-Fourteen tools stay registered. Argument schemas are in [docs/tools.json](docs/tools.json). All 539 operations and their arguments are in [docs/operations.json](docs/operations.json).
+Fifteen tools stay registered. Argument schemas are in [docs/tools.json](docs/tools.json). All 539 operations and their arguments are in [docs/operations.json](docs/operations.json).
 
 
 | Tool                                       | Role                                                             |
@@ -91,13 +92,14 @@ Fourteen tools stay registered. Argument schemas are in [docs/tools.json](docs/t
 | `run_operation`                            | One operation by name.                                           |
 | `bake`                                     | A `{ op, args }` recipe, in order.                               |
 | `magic`                                    | Magic, with `depth`, `intensive`, `languageSupport`, and `crib`. |
+| `specialist`                               | Magic, then a short decoder ladder, with an optional prefix.     |
 | `save_recipe` / `load_recipe`              | Store a named recipe and return it later.                        |
 | `list_recipes` / `delete_recipe`           | List saved names, or remove one.                                 |
 | `enable_category` / `disable_category`     | Mount or unmount a category as `cc_` tools.                      |
 | `enable_operations` / `disable_operations` | Mount or unmount named operations.                               |
 
 
-`run_operation`, `bake`, and `magic` take `input` or `inputPath`, not both. `inputEncoding` is `utf8` (default), `base64`, or `hex`. `inputPath` is a file or a folder. A folder runs the same recipe on each file inside it, including nested files, up to 200 files. `outputPath` writes the raw bytes.
+`run_operation`, `bake`, `magic`, and `specialist` take `input` or `inputPath`, not both. `inputEncoding` is `utf8` (default), `base64`, or `hex`. `inputPath` is a file or a folder. A folder runs the same recipe on each file inside it, including nested files, up to 200 files. `outputPath` writes the raw bytes. For `specialist`, those bytes are the winning candidate.
 
 Encode `hello` through Base64, then Base62, then Base32:
 
@@ -126,6 +128,7 @@ Set these on the `env` object of the `cyberchef` entry. Unset means the default.
 | `CYBERCHEF_ALLOW_NETWORK`    | allowed                     | `false` keeps Networking operations in search and makes `run_operation` and `bake` refuse them. |
 | `CYBERCHEF_TIMEOUT_MS`       | `30000`                     | Time limit for `bake` and `run_operation`. The worker is terminated when it elapses.            |
 | `CYBERCHEF_MAGIC_TIMEOUT_MS` | `60000`                     | Time limit for `magic`. The worker is terminated when it elapses.                               |
+| `CYBERCHEF_SPECIALIST_TIMEOUT_MS` | `180000`               | Time limit for one `specialist` ladder. Each Magic call uses the time that remains.             |
 | `CYBERCHEF_RECIPE_PATH`      | `~/.cyberchef/recipes.json` | File used by the recipe tools.                                                                  |
 
 

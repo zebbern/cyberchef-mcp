@@ -19,6 +19,7 @@ export const ALWAYS_ON_TOOLS = [
   "run_operation",
   "bake",
   "magic",
+  "specialist",
   "enable_category",
   "disable_category",
   "enable_operations",

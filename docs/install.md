@@ -23,7 +23,7 @@ codex mcp add cyberchef -- npx -y @zebbern/cyberchef
 }
 ```
 
-This entry sets every variable. `CYBERCHEF_ALLOW_NETWORK` set to `false` keeps Networking operations listed and refuses to run them. The other three values are the defaults.
+This entry sets every server variable. `CYBERCHEF_ALLOW_NETWORK` set to `false` keeps Networking operations listed and refuses to run them. The other values are the defaults.
 
 ```json
 "cyberchef": {
@@ -33,6 +33,7 @@ This entry sets every variable. `CYBERCHEF_ALLOW_NETWORK` set to `false` keeps N
     "CYBERCHEF_ALLOW_NETWORK": "false",
     "CYBERCHEF_TIMEOUT_MS": "30000",
     "CYBERCHEF_MAGIC_TIMEOUT_MS": "60000",
+    "CYBERCHEF_SPECIALIST_TIMEOUT_MS": "180000",
     "CYBERCHEF_RECIPE_PATH": "~/.cyberchef/recipes.json"
   }
 }

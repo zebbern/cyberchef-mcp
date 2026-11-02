@@ -267,6 +267,95 @@
       }
     },
     {
+      "name": "specialist",
+      "title": "Specialist",
+      "description": "Run a short decode ladder. With no prefix the first attempt is Magic, then each common decoder followed by Magic. A prefix such as From Base64 is baked once and stays on every attempt. XOR Brute Force and ROT13 Brute Force are attempts of their own and are not followed by Magic. A crib match stops the ladder. The result lists every attempt that produced output.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string",
+            "description": "Data to inspect. Omit when inputPath is set."
+          },
+          "inputEncoding": {
+            "type": "string",
+            "enum": [
+              "utf8",
+              "base64",
+              "hex"
+            ],
+            "default": "utf8",
+            "description": "How to decode input. Ignored when inputPath is set."
+          },
+          "inputPath": {
+            "type": "string",
+            "description": "File or folder to open as input. A folder runs the ladder on each file, including nested files."
+          },
+          "outputPath": {
+            "type": "string",
+            "description": "File path for one input, or a folder when inputPath is a folder. The winning candidate's raw bytes are written there."
+          },
+          "prefix": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "type": "string",
+                  "description": "Operation name."
+                },
+                "args": {
+                  "description": "Positional argument list or named argument object."
+                }
+              },
+              "required": [
+                "op"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Steps baked once and kept in front of every attempt."
+          },
+          "depth": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 3,
+            "description": "How many decode steps Magic may chain on each Magic attempt."
+          },
+          "intensive": {
+            "type": "boolean",
+            "default": false,
+            "description": "Intensive mode for every Magic attempt. Brute-forces more encodings and is much slower."
+          },
+          "languageSupport": {
+            "type": "boolean",
+            "default": false,
+            "description": "Extensive language support for every Magic attempt."
+          },
+          "crib": {
+            "type": "string",
+            "default": "",
+            "description": "Known plaintext or regular expression. A match stops the ladder."
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How many ladder attempts to run. Omit to run the full ladder."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
       "name": "enable_category",
       "title": "Enable category",
       "description": "Mount every operation in a category as its own cc_<slug> tool for this session. The category name is matched without case sensitivity.",
@@ -297,7 +386,7 @@
     {
       "name": "disable_category",
       "title": "Disable category",
-      "description": "Remove the cc_<slug> tools mounted for a category. Search, bake, magic, recipe save/load, and the enable/disable tools stay registered.",
+      "description": "Remove the cc_<slug> tools mounted for a category. Search, bake, magic, specialist, recipe save/load, and the enable/disable tools stay registered.",
       "inputSchema": {
         "type": "object",
         "properties": {
