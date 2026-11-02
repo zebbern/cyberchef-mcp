@@ -52,8 +52,17 @@ if (installedVersion() !== VERSION) {
 }
 
 function npmCli() {
-  const besideNode = path.join(path.dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js");
-  if (existsSync(besideNode)) return besideNode;
+  // npm_execpath is set inside lifecycle scripts. Windows installs keep npm in
+  // node_modules, Linux and macOS (including hosted runners) in lib/node_modules.
+  const nodeDir = path.dirname(process.execPath);
+  const candidates = [
+    process.env.npm_execpath,
+    path.join(nodeDir, "node_modules", "npm", "bin", "npm-cli.js"),
+    path.join(nodeDir, "lib", "node_modules", "npm", "bin", "npm-cli.js"),
+  ];
+  for (const candidate of candidates) {
+    if (candidate && existsSync(candidate)) return candidate;
+  }
   console.error("install-cyberchef: npm was not found next to node.");
   process.exit(1);
 }
