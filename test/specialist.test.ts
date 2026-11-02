@@ -176,10 +176,16 @@ describe("specialist ladder", { concurrency: 1 }, () => {
     assert.equal(result.reason, "local");
   });
 
-  test("a regular-expression crib matches when the literal text does not", () => {
-    assert.equal(outputMatchesCrib("flag{hi}", "flag\\{[a-z]+\\}"), true);
-    assert.equal(outputMatchesCrib("nope", "flag{"), false);
-    assert.equal(outputMatchesCrib("flag{hi}", ""), false);
+  test("a regular-expression crib matches when the literal text does not", async () => {
+    assert.equal(await outputMatchesCrib("flag{hi}", "flag\\{[a-z]+\\}"), true);
+    assert.equal(await outputMatchesCrib("nope", "flag{"), false);
+    assert.equal(await outputMatchesCrib("flag{hi}", ""), false);
+  });
+
+  test("a backtracking crib regex is capped and misses", async () => {
+    const start = Date.now();
+    assert.equal(await outputMatchesCrib("a".repeat(200), "(a+)+b"), false);
+    assert.ok(Date.now() - start < 5_000);
   });
 
   test("a crib match outranks a later UTF-8 result", async () => {
@@ -343,8 +349,8 @@ describe("specialist ladder", { concurrency: 1 }, () => {
     assert.equal(ranked.ordered[0]?.output, "other");
   });
 
-  test("whitespace is not a crib", () => {
-    assert.equal(outputMatchesCrib("flag{hi}", "   "), false);
+  test("whitespace is not a crib", async () => {
+    assert.equal(await outputMatchesCrib("flag{hi}", "   "), false);
   });
 
   test("specialist with one attempt runs Magic on a Base64 sample", { timeout: 180_000 }, async () => {

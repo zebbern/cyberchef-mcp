@@ -1,3 +1,4 @@
+import { Worker } from "node:worker_threads";
 import { assertRunnable } from "./catalog.ts";
 import { ChefInputError, ChefTimeoutError } from "./errors.ts";
 import { bake, bakeTimeoutMs, magic, magicTimeoutMs } from "./execute.ts";
@@ -157,15 +158,40 @@ export function buildAttempts(prefix: RecipeStep[], settings: MagicSettings): At
   return attempts;
 }
 
-export function outputMatchesCrib(output: string, crib: string): boolean {
+const REGEX_SAMPLE_CHARS = 10_000;
+const REGEX_TIMEOUT_MS = 250;
+
+// The crib arrives as model-supplied text, so the regex runs on a disposable
+// thread. Catastrophic backtracking then costs REGEX_TIMEOUT_MS, not the server.
+const CRIB_REGEX_SOURCE = `
+  const { parentPort } = require("node:worker_threads");
+  parentPort.on("message", ({ crib, sample }) => {
+    let matched = false;
+    try { matched = new RegExp(crib).test(sample); } catch {}
+    parentPort.postMessage(matched);
+  });
+`;
+
+export async function outputMatchesCrib(output: string, crib: string): Promise<boolean> {
   if (crib.trim() === "") return false;
   if (output.includes(crib)) return true;
-  try {
-    const sample = output.length > 100_000 ? output.slice(0, 100_000) : output;
-    return new RegExp(crib).test(sample);
-  } catch {
-    return false;
-  }
+  const sample = output.length > REGEX_SAMPLE_CHARS ? output.slice(0, REGEX_SAMPLE_CHARS) : output;
+  return new Promise((resolve) => {
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const worker = new Worker(CRIB_REGEX_SOURCE, { eval: true });
+    const finish = (matched: boolean) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      void worker.terminate();
+      resolve(matched);
+    };
+    timer = setTimeout(() => finish(false), REGEX_TIMEOUT_MS);
+    worker.on("message", (matched: unknown) => finish(matched === true));
+    worker.on("error", () => finish(false));
+    worker.postMessage({ crib, sample });
+  });
 }
 
 function stageEncoding(result: EncodedOutput): InputEncoding {
@@ -351,7 +377,7 @@ export async function runLadder(request: LadderRequest, runners: LadderRunners):
     const produced = await runAttempt(attempt, current, settings, runners, take, bakeCap, magicCap);
     if (produced === "timeout") break;
     if (produced === "skip") continue;
-    const matchedCrib = outputMatchesCrib(produced.output, settings.crib);
+    const matchedCrib = await outputMatchesCrib(produced.output, settings.crib);
     collected.push({ ...produced, matchedCrib, order: collected.length });
     if (matchedCrib) break;
   }

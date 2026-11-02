@@ -49,7 +49,7 @@ A name is a non-empty string without path separators.
 
 `languageSupport` is extensive language support. The default is `false`.
 
-`crib` is known plaintext or a regular expression used to keep matching results. The default is empty.
+`crib` is known plaintext or a regular expression used to keep matching results. The default is empty. A crib regex is matched against the first 10,000 characters of a candidate and stops after 250 ms.
 
 ## Specialist
 
