@@ -5,7 +5,6 @@
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
 import path from "node:path";
 
 const VERSION = "11.5.0";
@@ -28,7 +27,11 @@ if (installedVersion() === VERSION && existsSync(cryptoApi)) {
   process.exit(0);
 }
 
-const tarball = path.join(tmpdir(), `cyberchef-${VERSION}-${process.pid}.tgz`);
+// Extract with relative paths only: GNU tar (Git Bash) reads "C:\..." as host:file.
+rmSync(destination, { recursive: true, force: true });
+mkdirSync(destination, { recursive: true });
+const tarballName = `cyberchef-${VERSION}-${process.pid}.tgz`;
+const tarball = path.join(destination, tarballName);
 const url = `https://registry.npmjs.org/cyberchef/-/cyberchef-${VERSION}.tgz`;
 console.error(`install-cyberchef: downloading ${url}`);
 const response = await fetch(url);
@@ -37,10 +40,10 @@ if (!response.ok) {
   process.exit(1);
 }
 writeFileSync(tarball, Buffer.from(await response.arrayBuffer()));
-
-rmSync(destination, { recursive: true, force: true });
-mkdirSync(destination, { recursive: true });
-execFileSync("tar", ["-xzf", tarball, "-C", destination, "--strip-components=1"], { stdio: "inherit" });
+execFileSync("tar", ["-xzf", tarballName, "-C", ".", "--strip-components=1"], {
+  cwd: destination,
+  stdio: "inherit",
+});
 rmSync(tarball, { force: true });
 
 if (installedVersion() !== VERSION) {
