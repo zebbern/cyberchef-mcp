@@ -4,10 +4,13 @@
  * repair-cyberchef.mjs applies the two patches the Node API needs.
  */
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const VERSION = "11.5.0";
+// dist.integrity published by the npm registry for cyberchef@11.5.0.
+const INTEGRITY = "sha512-EsclfT09jkxWSp7+j0lPmorVDSuiJcCqe6G5RlglV2mWzav3EKrVn25gLKhMyHu7EStCAsRWJbnmj/97oMNA2A==";
 const root = path.resolve(import.meta.dirname, "..");
 const destination = path.join(root, "node_modules", "cyberchef");
 const packagePath = path.join(destination, "package.json");
@@ -39,7 +42,13 @@ if (!response.ok) {
   console.error(`install-cyberchef: download failed with HTTP ${response.status}`);
   process.exit(1);
 }
-writeFileSync(tarball, Buffer.from(await response.arrayBuffer()));
+const bytes = Buffer.from(await response.arrayBuffer());
+const integrity = `sha512-${createHash("sha512").update(bytes).digest("base64")}`;
+if (integrity !== INTEGRITY) {
+  console.error(`install-cyberchef: tarball integrity mismatch. Expected ${INTEGRITY}, got ${integrity}.`);
+  process.exit(1);
+}
+writeFileSync(tarball, bytes);
 execFileSync("tar", ["-xzf", tarballName, "-C", ".", "--strip-components=1"], {
   cwd: destination,
   stdio: "inherit",
